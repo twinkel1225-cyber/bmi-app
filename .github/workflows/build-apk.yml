@@ -45,38 +45,9 @@ jobs:
       working-directory: ./android
       run: ./gradlew assembleDebug
     
-    - name: Build Release APK
-      working-directory: ./android
-      run: ./gradlew assembleRelease
-    
-    - name: Sign Release APK
-      uses: ilhaan/sign-android-release@v1
-      id: sign_app
-      with:
-        releaseDirectory: android/app/build/outputs/apk/release
-        signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-        alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-        keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-    
     - name: Upload Debug APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: app-debug.apk
+        name: app-debug
         path: android/app/build/outputs/apk/debug/app-debug.apk
-    
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: app-release.apk
-        path: ${{ steps.sign_app.outputs.signedReleaseFile }}
-    
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: |
-          android/app/build/outputs/apk/debug/app-debug.apk
-          ${{ steps.sign_app.outputs.signedReleaseFile }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        retention-days: 30
