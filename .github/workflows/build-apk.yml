@@ -1,0 +1,82 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        api-levels: '33'
+        build-tools-version: '33.0.0'
+    
+    - name: Install Node dependencies
+      run: npm install
+    
+    - name: Build web app
+      run: npm run build
+    
+    - name: Sync Android project
+      run: npx cap sync android
+    
+    - name: Make gradlew executable
+      run: chmod +x android/gradlew
+    
+    - name: Build APK
+      working-directory: ./android
+      run: ./gradlew assembleDebug
+    
+    - name: Build Release APK
+      working-directory: ./android
+      run: ./gradlew assembleRelease
+    
+    - name: Sign Release APK
+      uses: ilhaan/sign-android-release@v1
+      id: sign_app
+      with:
+        releaseDirectory: android/app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+        alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug.apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+    
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release.apk
+        path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          android/app/build/outputs/apk/debug/app-debug.apk
+          ${{ steps.sign_app.outputs.signedReleaseFile }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

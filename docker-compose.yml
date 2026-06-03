@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./android/app/build:/app/android/app/build
+      - ./dist:/app/dist
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx4096m

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BMI Diet &amp; Workout</string>
+    <string name="title_activity_main">BMI Diet &amp; Workout</string>
+    <string name="package_name">com.bmiapp.fitness</string>
+    <string name="custom_url_scheme">com.bmiapp.fitness</string>
+</resources>
